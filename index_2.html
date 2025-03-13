@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BFS Algorithm Visualization</title>
+    <link rel="stylesheet" href="css/stylei2.css">
+</head>
+<body>
+
+<div class="algorithm-selector">
+    <button id="mapButton" class="btn btn-map text-white">Map</button>
+    <button id="bfsButton" class="btn btn-bfs text-white">BFS</button>
+    <button id="dijkstraButton" class="btn btn-dijkstra text-white">Dijkstra</button>
+</div>
+
+<div class="container">
+    <h1>BFS Algorithm Visualization</h1>
+
+    <div class="algorithm-description">
+        <h3>How BFS Works:</h3>
+        <p>Breadth-First Search (BFS) explores a graph by visiting all neighbors of a node before moving to the next level.
+            It uses a queue data structure to keep track of nodes to visit next. This makes BFS optimal for finding the
+            shortest path between nodes in an unweighted graph.</p>
+        <p>In this visualization, you can:</p>
+        <ul>
+            <li>Generate a new random graph</li>
+            <li>Select a target node by clicking on it</li>
+            <li>Step through the BFS algorithm manually with the "Next Step" button</li>
+            <li>Reset the visualization at any time</li>
+        </ul>
+    </div>
+
+    <div class="controls">
+        <button id="generate">Generate New Graph</button>
+        <button id="nextStep">Next Step</button>
+        <button id="reset">Reset</button>
+    </div>
+
+    <div id="visualization">
+        <div class="message-box" id="messageBox"></div>
+    </div>
+
+    <div class="queue-container">
+        <div class="queue-label">BFS Queue:</div>
+        <div class="queue-items" id="queueItems"></div>
+    </div>
+
+    <div class="info-panel">
+        <h3>Current State:</h3>
+        <p id="current-node">Current Node: None</p>
+        <p id="end-node">Target Node: None (Click on a node to set as target)</p>
+        <p id="visited-nodes">Visited Nodes: None</p>
+
+        <h3>Legend:</h3>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #3498db;"></div>
+                <span>Level 0 (Root)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #9b59b6;"></div>
+                <span>Level 1</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #e74c3c;"></div>
+                <span>Level 2</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 3px gold; transform: scale(1.1);"></div>
+                <span>Current Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 3px #f39c12;"></div>
+                <span>In Queue</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="opacity: 0.7; background-color: #9b59b6;"></div>
+                <span>Visited Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 3px #2ecc71; border: 3px solid #2ecc71;"></div>
+                <span>Target Node</span>
+            </div>
+            <div class="legend-item">
+                <div style="width: 50px; height: 5px; background-color: #2ecc71;"></div>
+                <span>Solution Path</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/vizual/bfsv.js" defer></script>
+
+</body>
+</html>

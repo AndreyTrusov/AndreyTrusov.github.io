@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BFS Algorithm Visualization</title>
+    <link rel="stylesheet" href="css/stylei3.css">
+</head>
+<body>
+
+<div class="algorithm-selector">
+    <button id="mapButton" class="btn btn-map text-white">Map</button>
+    <button id="bfsButton" class="btn btn-bfs text-white">BFS</button>
+    <button id="dijkstraButton" class="btn btn-dijkstra text-white">Dijkstra</button>
+</div>
+
+<div class="container">
+    <h1>BFS Algorithm Visualization</h1>
+
+    <div class="algorithm-description">
+        <h3>How Dijkstra's Algorithm Works:</h3>
+        <p>Dijkstra's algorithm finds the shortest path between nodes in a graph with positive edge weights.
+            It uses a priority queue to always process the node with the smallest known distance first.</p>
+        <p>In this visualization, you can:</p>
+        <ul>
+            <li>Generate a new random weighted graph</li>
+            <li>Select up to two target nodes by clicking on them</li>
+            <li>Step through Dijkstra's algorithm manually with the "Next Step" button</li>
+            <li>Reset the visualization at any time</li>
+        </ul>
+    </div>
+
+    <div class="controls">
+        <button id="generate">Generate New Graph</button>
+        <button id="nextStep">Next Step</button>
+        <button id="reset">Reset</button>
+    </div>
+
+    <div id="visualization">
+        <div class="message-box" id="messageBox"></div>
+    </div>
+
+    <div class="queue-container">
+        <div class="queue-label">BFS Queue:</div>
+        <div class="queue-items" id="queueItems"></div>
+    </div>
+
+    <div class="info-panel">
+        <h3>Current State:</h3>
+        <p id="current-node">Current Node: None</p>
+        <p id="end-node">Target Node: None (Click on a node to set as target)</p>
+        <p id="visited-nodes">Visited Nodes: None</p>
+
+        <h3>Legend:</h3>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #3498db;"></div>
+                <span>Level 0 (Root)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #9b59b6;"></div>
+                <span>Level 1</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #e74c3c;"></div>
+                <span>Level 2</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 3px gold; transform: scale(1.1);"></div>
+                <span>Current Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 3px #f39c12;"></div>
+                <span>In Queue</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="opacity: 0.7; background-color: #9b59b6;"></div>
+                <span>Visited Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 3px #2ecc71; border: 3px solid #2ecc71;"></div>
+                <span>Target Node</span>
+            </div>
+            <div class="legend-item">
+                <div style="width: 50px; height: 5px; background-color: #2ecc71;"></div>
+                <span>Solution Path</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/vizual/dijkstrav.js" defer></script>
+
+</body>
+</html>
