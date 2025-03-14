@@ -1,3 +1,3 @@
 const CONFIG = {
-    GOOGLE_MAPS_API_KEY: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
+    GOOGLE_MAPS_API_KEY: "AIzaSyBtoZwuXMHMTdVf5tl8qRJBh3ydMfjASFs"
 };
