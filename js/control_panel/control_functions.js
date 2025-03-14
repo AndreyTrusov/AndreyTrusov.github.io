@@ -22,6 +22,7 @@ function toggleMapInteractivity() {
 
 // Refresh algorithm
 function refreshAlgorithmButton() {
+    // Clear markers
     if (endMarker) {
         endMarker.setMap(null);
         endMarker = null;
@@ -43,11 +44,26 @@ function refreshAlgorithmButton() {
     });
     lines.length = 0;
 
+    // Clear data structures
+    map_2.clear();
+
+    // Reset algorithm state
+    bfsRunning = false;
+    nextStepReady = false;
+    visited = new Set();
+    parentMap = new Map();
+    queue = [];
+    path = [];
+
+    // Reset modes
+    stepMode = false;
+    setSpeedMode = false;
+    currentSpeed = 1;
+
     updateStartButtonText();
+    clearLogMessages();
 
-    // queue.length = 0;
-
-    logMessage("Refreshing the Algorithm");
+    logMessage("Algorithm refreshed completely");
 }
 
 // If no start/finish point set --> start button is not available
