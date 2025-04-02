@@ -3,30 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BFS Algorithm Visualization</title>
-    <link rel="stylesheet" href="css/stylei2.css">
+    <title>A* Search Algorithm Visualization</title>
+    <link rel="stylesheet" href="css/stylev2.css">
 </head>
 <body>
 
 <div class="algorithm-selector">
-    <button id="mapButton" class="btn btn-map text-white">Map</button>
+    <button id="randomWalkButton" class="btn btn-random-walk text-white">Random Walk</button>
     <button id="bfsButton" class="btn btn-bfs text-white">BFS</button>
+    <button id="dfsButton" class="btn btn-dijkstra text-white">DFS</button>
     <button id="dijkstraButton" class="btn btn-dijkstra text-white">Dijkstra</button>
+    <button id="bestFirstButton" class="btn btn-best-first text-white">Best-First</button>
+    <button id="astarButton" class="btn btn-astar text-white">A*</button>
+    <button id="bidirectionalButton" class="btn btn-bidirectional text-white">Bidirectional</button>
+<!--    <button id="mapButton" class="btn btn-map text-white">Map</button>-->
 </div>
 
 <div class="container">
-    <h1>BFS Algorithm Visualization</h1>
+    <h1>A* Search Algorithm Visualization</h1>
 
     <div class="algorithm-description">
-        <h3>How BFS Works:</h3>
-        <p>Breadth-First Search (BFS) explores a graph by visiting all neighbors of a node before moving to the next level.
-            It uses a queue data structure to keep track of nodes to visit next. This makes BFS optimal for finding the
-            shortest path between nodes in an unweighted graph.</p>
+        <h3>How A* Search Algorithm Works:</h3>
+        <p>A* (A-star) is an informed search algorithm that uses both the actual cost to reach a node (g-score)
+            and a heuristic estimate to the goal (h-score) to determine which nodes to explore next.</p>
+        <p>f(n) = g(n) + h(n) where:</p>
+        <ul>
+            <li>g(n) is the cost from the start node to the current node</li>
+            <li>h(n) is the estimated cost from the current node to the goal</li>
+        </ul>
         <p>In this visualization, you can:</p>
         <ul>
-            <li>Generate a new random graph</li>
-            <li>Select a target node by clicking on it</li>
-            <li>Step through the BFS algorithm manually with the "Next Step" button</li>
+            <li>Generate a new random weighted graph</li>
+            <li>Select one or more target nodes by clicking on them</li>
+            <li>Step through the A* algorithm manually with the "Next Step" button</li>
             <li>Reset the visualization at any time</li>
         </ul>
     </div>
@@ -42,7 +51,7 @@
     </div>
 
     <div class="queue-container">
-        <div class="queue-label">BFS Queue:</div>
+        <div class="queue-label">Open Set (by f-score):</div>
         <div class="queue-items" id="queueItems"></div>
     </div>
 
@@ -72,7 +81,7 @@
             </div>
             <div class="legend-item">
                 <div class="legend-color" style="box-shadow: 0 0 0 3px #f39c12;"></div>
-                <span>In Queue</span>
+                <span>In Open Set</span>
             </div>
             <div class="legend-item">
                 <div class="legend-color" style="opacity: 0.7; background-color: #9b59b6;"></div>
@@ -90,7 +99,7 @@
     </div>
 </div>
 
-<script src="js/vizual/bfsv.js" defer></script>
+<script src="../bt_git/js/vizual/astarv.js" defer></script>
 
 </body>
 </html>

@@ -146,9 +146,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Navigate to the corresponding HTML file based on algorithm
             if (algorithm === 'mapButton') {
-                window.location.href = 'index.html';
+                window.location.href = 'index_old.html';
             } else if (algorithm === 'bfsButton') {
-                window.location.href = 'index_2.html';
+                window.location.href = 'index.html';
             } else if (algorithm === 'dijkstraButton') {
                 window.location.href = 'index_3.html';
             }

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Random Walk Algorithm Visualization</title>
+  <link rel="stylesheet" href="css/stylev2.css">
+  <style>
+    .path-edge {
+      background-color: #f39c12 !important;
+      opacity: 0.6;
+      height: 2px;
+    }
+
+    .visited-edge {
+      background-color: #95a5a6 !important;
+      opacity: 0.4;
+    }
+
+    .start-node {
+      border: 3px solid #2980b9 !important;
+    }
+
+    .target-node {
+      box-shadow: 0 0 0 3px #2ecc71 !important;
+      border: 3px solid #2ecc71 !important;
+    }
+
+    .current-node {
+      box-shadow: 0 0 0 3px gold !important;
+      transform: scale(1.1);
+      z-index: 10;
+    }
+
+    .visited {
+      opacity: 0.5;
+    }
+
+    .visit-count {
+      z-index: 5;
+    }
+
+    .path-display {
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+
+<div class="algorithm-selector">
+  <button id="randomWalkButton" class="btn btn-random-walk text-white">Random Walk</button>
+  <button id="bfsButton" class="btn btn-bfs text-white">BFS</button>
+  <button id="dfsButton" class="btn btn-dijkstra text-white">DFS</button>
+  <button id="dijkstraButton" class="btn btn-dijkstra text-white">Dijkstra</button>
+  <button id="bestFirstButton" class="btn btn-best-first text-white">Best-First</button>
+  <button id="astarButton" class="btn btn-astar text-white">A*</button>
+  <button id="bidirectionalButton" class="btn btn-bidirectional text-white">Bidirectional</button>
+<!--  <button id="mapButton" class="btn btn-map text-white">Map</button>-->
+</div>
+
+<div class="container">
+  <h1>Random Walk Algorithm Visualization</h1>
+
+  <div class="algorithm-description">
+    <h3>How Random Walk Works:</h3>
+    <p>The Random Walk algorithm explores a graph by randomly selecting a neighboring node at each step.
+      Unlike deterministic algorithms like BFS or DFS, a random walk doesn't follow a specific strategy.</p>
+    <p>Key characteristics:</p>
+    <ul>
+      <li>At each step, one of the current node's neighbors is selected at random</li>
+      <li>The walk continues until it finds the target or reaches a maximum number of steps</li>
+      <li>Random walks can visit the same node multiple times</li>
+      <li>If the walk gets stuck or exceeds the maximum steps, it can restart from the beginning</li>
+    </ul>
+    <p>In this visualization, you can:</p>
+    <ul>
+      <li>Generate a new random graph with 3 levels</li>
+      <li>Select a target node by clicking on it</li>
+      <li>Step through the random walk manually with the "Next Step" button</li>
+      <li>Reset the visualization at any time</li>
+    </ul>
+  </div>
+
+  <div class="controls">
+    <button id="generate">Generate New Graph</button>
+    <button id="nextStep">Next Step</button>
+    <button id="reset">Reset</button>
+  </div>
+
+  <div id="visualization">
+    <div class="message-box" id="messageBox"></div>
+  </div>
+
+  <div class="queue-container">
+    <div class="queue-label">Random Walk Information:</div>
+    <div class="queue-items" id="infoItems"></div>
+  </div>
+
+  <div class="info-panel">
+    <h3>Current State:</h3>
+    <p id="current-node">Current Node: None</p>
+    <p id="target-node">Target Node: None (Click on a node to set as target)</p>
+    <p id="steps-count">Steps: 0</p>
+    <p id="path-length">Path Length: 0</p>
+
+    <h3>Legend:</h3>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: #3498db;"></div>
+        <span>Level 0 (Root)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: #9b59b6;"></div>
+        <span>Level 1</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: #e74c3c;"></div>
+        <span>Level 2</span>
+      </div>
+      <!-- Removed Level 3 from legend -->
+      <div class="legend-item">
+        <div class="legend-color" style="border: 3px solid #2980b9;"></div>
+        <span>Start Node</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="box-shadow: 0 0 0 3px gold; transform: scale(1.1);"></div>
+        <span>Current Node</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="box-shadow: 0 0 0 3px #2ecc71; border: 3px solid #2ecc71;"></div>
+        <span>Target Node</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="opacity: 0.5;"></div>
+        <span>Visited Node</span>
+      </div>
+      <div class="legend-item">
+        <div style="width: 50px; height: 2px; background-color: #f39c12;"></div>
+        <span>Random Walk Path</span>
+      </div>
+      <div class="legend-item">
+        <div style="position: relative; width: 20px; height: 20px; background-color: #3498db; opacity: 0.7;">
+          <span style="position: absolute; top: -10px; right: -10px; background-color: white; border-radius: 50%; width: 15px; height: 15px; font-size: 10px; display: flex; align-items: center; justify-content: center;">3</span>
+        </div>
+        <span>Visit Count</span>
+      </div>
+      <div class="legend-item">
+        <div style="width: 50px; height: 6px; background-color: #f39c12; opacity: 0.9;"></div>
+        <span>Multiple Traversals</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../bt_git/js/vizual/randomv.js" defer></script>
+
+</body>
+</html>

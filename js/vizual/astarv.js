@@ -2,7 +2,7 @@ class Edge {
     constructor(node1, node2) {
         this.node1 = node1;
         this.node2 = node2;
-        this.weight = Math.floor(Math.random() * 91) + 10;
+        this.weight = Math.floor(Math.random() * 91) + 10; // Random weight between 10-100
     }
 }
 
@@ -16,7 +16,8 @@ class Node {
         this.visited = false;
         this.inQueue = false;
         this.parent = null;
-        this.distance = Infinity;
+        this.gScore = Infinity;
+        this.fScore = Infinity;
     }
 
     connect(node, weight = null) {
@@ -30,15 +31,16 @@ class Node {
         this.visited = false;
         this.inQueue = false;
         this.parent = null;
-        this.distance = Infinity;
+        this.gScore = Infinity;
+        this.fScore = Infinity;
     }
 }
 
-class DijkstraGraph {
+class AStarGraph {
     constructor() {
         this.nodes = [];
         this.edges = [];
-        this.priorityQueue = []; // [node, distance]
+        this.openSet = []; // Priority queue based on fScore
         this.visitedNodes = [];
         this.currentNode = null;
         this.startNode = null;
@@ -47,33 +49,42 @@ class DijkstraGraph {
         this.solutionPaths = [];
         this.algorithmRunning = false;
 
+        // UI Elements
         this.nextStepButton = document.getElementById('nextStep');
         this.resetButton = document.getElementById('reset');
         this.generateButton = document.getElementById('generate');
         this.messageBox = document.getElementById('messageBox');
         this.queueContainer = document.getElementById('queueItems');
 
+        // Bind methods
         this.generate = this.generate.bind(this);
         this.nextStep = this.nextStep.bind(this);
         this.reset = this.reset.bind(this);
         this.updateUI = this.updateUI.bind(this);
         this.toggleEndNode = this.toggleEndNode.bind(this);
 
+        // Set up event listeners
         this.nextStepButton.addEventListener('click', this.nextStep);
         this.resetButton.addEventListener('click', this.reset);
         this.generateButton.addEventListener('click', this.generate);
 
-        document.querySelector('h1').textContent = "Dijkstra's Algorithm Visualization";
+        // Update title and description
+        document.querySelector('h1').textContent = "A* Search Algorithm Visualization";
         const description = document.querySelector('.algorithm-description');
         description.innerHTML = `
-            <h3>How Dijkstra's Algorithm Works:</h3>
-            <p>Dijkstra's algorithm finds the shortest path between nodes in a graph with positive edge weights.
-               It uses a priority queue to always process the node with the smallest known distance first.</p>
+            <h3>How A* Search Algorithm Works:</h3>
+            <p>A* (A-star) is an informed search algorithm that uses both the actual cost to reach a node (g-score) 
+               and a heuristic estimate to the goal (h-score) to determine which nodes to explore next.</p>
+            <p>f(n) = g(n) + h(n) where:</p>
+            <ul>
+                <li>g(n) is the cost from the start node to the current node</li>
+                <li>h(n) is the estimated cost from the current node to the goal</li>
+            </ul>
             <p>In this visualization, you can:</p>
             <ul>
                 <li>Generate a new random weighted graph</li>
                 <li>Select one or more target nodes by clicking on them</li>
-                <li>Step through Dijkstra's algorithm manually with the "Next Step" button</li>
+                <li>Step through the A* algorithm manually with the "Next Step" button</li>
                 <li>Reset the visualization at any time</li>
             </ul>
         `;
@@ -88,7 +99,7 @@ class DijkstraGraph {
         const root = new Node(1, 0);
         this.nodes.push(root);
 
-        const level1Count = Math.floor(Math.random() * 2) + 3;
+        const level1Count = Math.floor(Math.random() * 2) + 3; // 3-4 nodes
         for (let i = 0; i < level1Count; i++) {
             const node = new Node(this.nodes.length + 1, 1);
             this.nodes.push(node);
@@ -98,7 +109,7 @@ class DijkstraGraph {
 
         const level1Nodes = this.nodes.filter(node => node.level === 1);
         level1Nodes.forEach(parentNode => {
-            const childCount = Math.floor(Math.random() * 2) + 2;
+            const childCount = Math.floor(Math.random() * 2) + 2; // 2-3 children
             for (let i = 0; i < childCount; i++) {
                 const node = new Node(this.nodes.length + 1, 2);
                 this.nodes.push(node);
@@ -122,10 +133,12 @@ class DijkstraGraph {
         const width = container.offsetWidth;
         const height = container.offsetHeight;
 
+        // Position root node
         const root = this.nodes[0];
         root.x = width / 2;
         root.y = 50;
 
+        // Position level 1 nodes
         const level1Nodes = this.nodes.filter(node => node.level === 1);
         const l1Width = width * 0.8;
         const l1Step = l1Width / (level1Nodes.length + 1);
@@ -135,6 +148,7 @@ class DijkstraGraph {
             node.y = height / 2 - 50;
         });
 
+        // Position level 2 nodes
         const level2Nodes = this.nodes.filter(node => node.level === 2);
         const nodesByParent = {};
 
@@ -164,6 +178,21 @@ class DijkstraGraph {
         }
     }
 
+    // Calculate heuristic
+    heuristic(node, targetNode) {
+        const dx = node.x - targetNode.x;
+        const dy = node.y - targetNode.y;
+        return Math.sqrt(dx * dx + dy * dy) / 15; // Scale down to match edge weights better
+    }
+
+    // Calculate the best heuristic to any target
+    getBestHeuristic(node) {
+        if (this.endNodes.length === 0) return 0;
+
+        // Calculate heuristic to all targets and use the minimum
+        return Math.min(...this.endNodes.map(target => this.heuristic(node, target)));
+    }
+
     toggleEndNode(node) {
         if (!this.algorithmRunning && node !== this.startNode) {
             const index = this.endNodes.indexOf(node);
@@ -188,16 +217,15 @@ class DijkstraGraph {
             return;
         }
 
+        // First step - initialize A*
         if (!this.algorithmRunning) {
             if (this.startNode && this.endNodes.length > 0) {
                 this.algorithmRunning = true;
 
-                this.startNode.distance = 0;
-                this.currentNode = this.startNode;
-                this.currentNode.visited = true;
-                this.visitedNodes.push(this.currentNode);
+                this.startNode.gScore = 0;
+                this.startNode.fScore = this.getBestHeuristic(this.startNode);
 
-                this.addToPriorityQueue(this.startNode, 0);
+                this.addToOpenSet(this.startNode);
 
                 this.updateButtons(false, true);
                 this.updateUI();
@@ -208,27 +236,25 @@ class DijkstraGraph {
             }
         }
 
-        if (this.priorityQueue.length === 0) {
+        if (this.openSet.length === 0) {
             this.showMessage("No path found to target node(s)!");
             this.algorithmRunning = false;
             this.updateButtons(true, false);
             return;
         }
 
-        const [currentDistance, currentNodeId] = this.priorityQueue.shift();
+        // Get node with lowest fScore from open set
+        const currentNodeId = this.openSet.shift();
         this.currentNode = this.nodes.find(node => node.id === currentNodeId);
         this.currentNode.inQueue = false;
 
-        if (this.currentNode.visited && currentDistance > this.currentNode.distance) {
-            this.updateUI();
-            return;
-        }
-
+        // Mark as visited
         if (!this.currentNode.visited) {
             this.currentNode.visited = true;
             this.visitedNodes.push(this.currentNode);
         }
 
+        // Check if we reached an end node
         if (this.endNodes.includes(this.currentNode)) {
             this.reconstructPath(this.currentNode);
 
@@ -249,11 +275,11 @@ class DijkstraGraph {
             return;
         }
 
-        this.updateNeighborDistances(this.currentNode);
+        this.exploreNeighbors(this.currentNode);
         this.updateUI();
     }
 
-    updateNeighborDistances(node) {
+    exploreNeighbors(node) {
         const connectedEdges = this.edges.filter(edge =>
             edge.node1 === node || edge.node2 === node
         );
@@ -261,27 +287,33 @@ class DijkstraGraph {
         connectedEdges.forEach(edge => {
             const neighbor = edge.node1 === node ? edge.node2 : edge.node1;
 
-            const newDistance = node.distance + edge.weight;
+            const tentativeGScore = node.gScore + edge.weight;
 
-            if (newDistance < neighbor.distance) {
-                neighbor.distance = newDistance;
+            if (tentativeGScore < neighbor.gScore) {
                 neighbor.parent = node;
-                this.addToPriorityQueue(neighbor, newDistance);
+                neighbor.gScore = tentativeGScore;
+                neighbor.fScore = tentativeGScore + this.getBestHeuristic(neighbor);
+
+                if (!neighbor.inQueue && !neighbor.visited) {
+                    this.addToOpenSet(neighbor);
+                }
             }
         });
     }
 
-    addToPriorityQueue(node, distance) {
+    addToOpenSet(node) {
         node.inQueue = true;
 
-        const entry = [distance, node.id];
+        let insertIndex = this.openSet.findIndex(nodeId => {
+            const otherNode = this.nodes.find(n => n.id === nodeId);
+            return otherNode.fScore > node.fScore;
+        });
 
-        let insertIndex = this.priorityQueue.findIndex(([d, _]) => d > distance);
         if (insertIndex === -1) {
-            insertIndex = this.priorityQueue.length;
+            insertIndex = this.openSet.length;
         }
 
-        this.priorityQueue.splice(insertIndex, 0, entry);
+        this.openSet.splice(insertIndex, 0, node.id);
     }
 
     reconstructPath(endNode) {
@@ -301,9 +333,10 @@ class DijkstraGraph {
     reset(fullReset = true) {
         if (this.nodes.length === 0) return;
 
+        // Reset all nodes
         this.nodes.forEach(node => node.reset());
 
-        this.priorityQueue = [];
+        this.openSet = [];
         this.visitedNodes = [];
         this.solutionPaths = [];
         this.pathFound = false;
@@ -350,8 +383,7 @@ class DijkstraGraph {
             const isPathEdge = this.isEdgeInSolutionPath(node1, node2);
             if (isPathEdge) {
                 edgeEl.classList.add('solution-path');
-            }
-            else if (node1.visited && node2.visited) {
+            } else if (node1.visited && node2.visited) {
                 edgeEl.classList.add('traversed');
             }
 
@@ -365,6 +397,7 @@ class DijkstraGraph {
             edgeEl.style.top = `${node1.y}px`;
             edgeEl.style.transform = `rotate(${angle}deg)`;
 
+            // Add distance label
             const distanceLabel = document.createElement('div');
             distanceLabel.className = 'distance-label';
             distanceLabel.textContent = edge.weight;
@@ -427,22 +460,23 @@ class DijkstraGraph {
             nodeEl.style.left = `${node.x - 25}px`;
             nodeEl.style.top = `${node.y - 25}px`;
 
-            if (node.visited && node !== this.startNode) {
-                const distanceLabel = document.createElement('div');
-                distanceLabel.className = 'node-distance';
-                distanceLabel.textContent = node.distance;
-                distanceLabel.style.position = 'absolute';
-                distanceLabel.style.top = '-25px';
-                distanceLabel.style.left = '0';
-                distanceLabel.style.width = '100%';
-                distanceLabel.style.textAlign = 'center';
-                distanceLabel.style.fontSize = '12px';
-                distanceLabel.style.fontWeight = 'bold';
-                distanceLabel.style.color = '#333';
-                distanceLabel.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-                distanceLabel.style.borderRadius = '10px';
-                distanceLabel.style.padding = '2px 0';
-                nodeEl.appendChild(distanceLabel);
+            // Add scores labels for visited nodes
+            if ((node.inQueue || node.visited) && node !== this.startNode) {
+                const scoresLabel = document.createElement('div');
+                scoresLabel.className = 'node-scores';
+                scoresLabel.innerHTML = `g:${node.gScore.toFixed(0)} f:${node.fScore.toFixed(0)}`;
+                scoresLabel.style.position = 'absolute';
+                scoresLabel.style.top = '-25px';
+                scoresLabel.style.left = '0';
+                scoresLabel.style.width = '100%';
+                scoresLabel.style.textAlign = 'center';
+                scoresLabel.style.fontSize = '11px';
+                scoresLabel.style.fontWeight = 'bold';
+                scoresLabel.style.color = '#333';
+                scoresLabel.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+                scoresLabel.style.borderRadius = '10px';
+                scoresLabel.style.padding = '2px 0';
+                nodeEl.appendChild(scoresLabel);
             }
 
             if (node === this.currentNode) {
@@ -470,56 +504,33 @@ class DijkstraGraph {
             container.appendChild(nodeEl);
         });
 
+        // Update info panel
         document.getElementById('current-node').textContent = `Current Node: ${this.currentNode ? this.currentNode.id : this.startNode ? this.startNode.id : 'None'}`;
         document.getElementById('end-node').textContent = `Target Node(s): ${this.endNodes.map(node => node.id).join(', ') || 'None (Click on nodes to set targets)'}`;
         document.getElementById('visited-nodes').textContent = `Visited Nodes: ${this.visitedNodes.map(node => node.id).join(', ') || 'None'}`;
 
-        this.updateLegend();
-
-        this.updateQueueDisplay();
+        this.updateOpenSetDisplay();
     }
 
-    updateLegend() {
-        const legend = document.querySelector('.legend');
-
-        if (!document.querySelector('.legend-item.weight')) {
-            const weightLegendItem = document.createElement('div');
-            weightLegendItem.className = 'legend-item weight';
-            weightLegendItem.innerHTML = `
-                <div style="display: flex; align-items: center;">
-                    <div style="width: 50px; height: 20px; position: relative; background-color: #95a5a6;">
-                        <div style="position: absolute; top: -15px; left: 15px; background-color: rgba(255,255,255,0.7); padding: 2px 5px; border-radius: 10px; font-size: 12px;">42</div>
-                    </div>
-                    <span style="margin-left: 5px;">Edge Weight</span>
-                </div>
-            `;
-            legend.appendChild(weightLegendItem);
-        }
-
-        const endNodeLegend = document.querySelector('.legend-item:nth-last-child(2)');
-        if (endNodeLegend) {
-            endNodeLegend.querySelector('span').textContent = 'Target Node(s)';
-        }
-    }
-
-    updateQueueDisplay() {
+    updateOpenSetDisplay() {
         this.queueContainer.innerHTML = '';
-        document.querySelector('.queue-label').textContent = "Priority Queue:";
+        document.querySelector('.queue-label').textContent = "Open Set (by f-score):";
 
-        if (this.priorityQueue.length === 0) {
+        if (this.openSet.length === 0) {
             return;
         }
 
-        this.priorityQueue.forEach(([distance, nodeId]) => {
+        this.openSet.forEach(nodeId => {
+            const node = this.nodes.find(n => n.id === nodeId);
             const queueItem = document.createElement('div');
             queueItem.className = 'queue-item';
-            queueItem.innerHTML = `${nodeId}<span style="font-size: 9px; display: block;">${distance}</span>`;
+            queueItem.innerHTML = `${nodeId}<span style="font-size: 9px; display: block;">f=${node.fScore.toFixed(0)}</span>`;
             this.queueContainer.appendChild(queueItem);
         });
     }
 }
 
-const graph = new DijkstraGraph();
+const graph = new AStarGraph();
 
 window.addEventListener('load', () => {
     graph.generate();
@@ -534,7 +545,6 @@ document.addEventListener('keydown', (event) => {
         graph.generate();
     }
 });
-
 
 document.addEventListener('DOMContentLoaded', function () {
     const algorithmButtons = document.querySelectorAll('.algorithm-selector .btn');
@@ -569,5 +579,4 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-
-document.getElementById('mapButton').classList.add('active');
+document.getElementById('astarButton').classList.add('active');

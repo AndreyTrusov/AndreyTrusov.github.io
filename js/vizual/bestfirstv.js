@@ -2,7 +2,7 @@ class Edge {
     constructor(node1, node2) {
         this.node1 = node1;
         this.node2 = node2;
-        this.weight = Math.floor(Math.random() * 91) + 10;
+        this.weight = Math.floor(Math.random() * 91) + 10; // Random weight between 10-100
     }
 }
 
@@ -16,7 +16,7 @@ class Node {
         this.visited = false;
         this.inQueue = false;
         this.parent = null;
-        this.distance = Infinity;
+        this.heuristic = Infinity;
     }
 
     connect(node, weight = null) {
@@ -30,21 +30,21 @@ class Node {
         this.visited = false;
         this.inQueue = false;
         this.parent = null;
-        this.distance = Infinity;
+        this.heuristic = Infinity;
     }
 }
 
-class DijkstraGraph {
+class BestFirstSearch {
     constructor() {
         this.nodes = [];
         this.edges = [];
-        this.priorityQueue = []; // [node, distance]
+        this.priorityQueue = []; //[nodeId, heuristic]
         this.visitedNodes = [];
         this.currentNode = null;
         this.startNode = null;
-        this.endNodes = [];
+        this.targetNode = null;
         this.pathFound = false;
-        this.solutionPaths = [];
+        this.solutionPath = [];
         this.algorithmRunning = false;
 
         this.nextStepButton = document.getElementById('nextStep');
@@ -57,23 +57,31 @@ class DijkstraGraph {
         this.nextStep = this.nextStep.bind(this);
         this.reset = this.reset.bind(this);
         this.updateUI = this.updateUI.bind(this);
-        this.toggleEndNode = this.toggleEndNode.bind(this);
+        this.toggleTargetNode = this.toggleTargetNode.bind(this);
 
         this.nextStepButton.addEventListener('click', this.nextStep);
         this.resetButton.addEventListener('click', this.reset);
         this.generateButton.addEventListener('click', this.generate);
 
-        document.querySelector('h1').textContent = "Dijkstra's Algorithm Visualization";
+        document.querySelector('h1').textContent = "Best-First Search (Greedy) Algorithm Visualization";
         const description = document.querySelector('.algorithm-description');
         description.innerHTML = `
-            <h3>How Dijkstra's Algorithm Works:</h3>
-            <p>Dijkstra's algorithm finds the shortest path between nodes in a graph with positive edge weights.
-               It uses a priority queue to always process the node with the smallest known distance first.</p>
+            <h3>How Best-First Search (Greedy) Works:</h3>
+            <p>Best-First Search is an informed search algorithm that uses a heuristic function to prioritize which nodes to explore next.
+               Unlike A*, it only considers the estimated distance to the goal (the heuristic) without accounting for the cost of the path so far.</p>
+            <p>Key characteristics:</p>
+            <ul>
+                <li>Uses a <strong>priority queue</strong> based on a heuristic function</li>
+                <li>Always explores the node that appears closest to the target</li>
+                <li>Is "greedy" because it only looks at the estimated future cost</li>
+                <li>May not find the optimal (shortest) path, but often finds a solution quickly</li>
+            </ul>
+            <p>In this visualization, we use Euclidean distance as the heuristic.</p>
             <p>In this visualization, you can:</p>
             <ul>
-                <li>Generate a new random weighted graph</li>
-                <li>Select one or more target nodes by clicking on them</li>
-                <li>Step through Dijkstra's algorithm manually with the "Next Step" button</li>
+                <li>Generate a new random graph with 3 levels</li>
+                <li>Select a target node by clicking on it</li>
+                <li>Step through the algorithm manually with the "Next Step" button</li>
                 <li>Reset the visualization at any time</li>
             </ul>
         `;
@@ -88,7 +96,7 @@ class DijkstraGraph {
         const root = new Node(1, 0);
         this.nodes.push(root);
 
-        const level1Count = Math.floor(Math.random() * 2) + 3;
+        const level1Count = Math.floor(Math.random() * 2) + 3; // 3-4 nodes
         for (let i = 0; i < level1Count; i++) {
             const node = new Node(this.nodes.length + 1, 1);
             this.nodes.push(node);
@@ -98,7 +106,7 @@ class DijkstraGraph {
 
         const level1Nodes = this.nodes.filter(node => node.level === 1);
         level1Nodes.forEach(parentNode => {
-            const childCount = Math.floor(Math.random() * 2) + 2;
+            const childCount = Math.floor(Math.random() * 2) + 2; // 2-3 children
             for (let i = 0; i < childCount; i++) {
                 const node = new Node(this.nodes.length + 1, 2);
                 this.nodes.push(node);
@@ -111,7 +119,7 @@ class DijkstraGraph {
 
         this.startNode = root;
         this.currentNode = null;
-        this.endNodes = [];
+        this.targetNode = null;
 
         this.updateButtons(true, false);
         this.updateUI();
@@ -164,23 +172,51 @@ class DijkstraGraph {
         }
     }
 
-    toggleEndNode(node) {
+    calculateHeuristic(node) {
+        if (!this.targetNode) return Infinity;
+
+        // Base heuristic: Euclidean distance
+        const dx = node.x - this.targetNode.x;
+        const dy = node.y - this.targetNode.y;
+        const baseHeuristic = Math.sqrt(dx * dx + dy * dy);
+
+        // Add randomization factor (±30%)
+        const randomFactor = 0.7 + (Math.random() * 0.6);
+
+        // Make the heuristic more interesting by level
+        let levelFactor = 1;
+        if (node.level === 0) levelFactor = 0.9;
+        else if (node.level === 1) levelFactor = 1.0;
+        else if (node.level === 2) levelFactor = 1.1; // Slightly penalize deeper nodes
+
+        return baseHeuristic * randomFactor * levelFactor;
+    }
+
+    toggleTargetNode(node) {
         if (!this.algorithmRunning && node !== this.startNode) {
-            const index = this.endNodes.indexOf(node);
-            if (index === -1) {
-                if (this.endNodes.length < 2) {
-                    this.endNodes.push(node);
-                } else {
-                    this.endNodes.shift();
-                    this.endNodes.push(node);
-                }
+            if (this.targetNode === node) {
+                node.isTarget = false;
+                this.targetNode = null;
             } else {
-                this.endNodes.splice(index, 1);
+                if (this.targetNode) {
+                    this.targetNode.isTarget = false;
+                }
+                node.isTarget = true;
+                this.targetNode = node;
             }
+
+            this.updateAllHeuristics();
+
             this.updateUI();
-            document.getElementById('end-node').textContent = `Target Node(s): ${this.endNodes.map(n => n.id).join(', ') || 'None'}`;
-            this.nextStepButton.disabled = this.endNodes.length === 0;
+            document.getElementById('target-node').textContent = `Target Node: ${this.targetNode ? this.targetNode.id : 'None'}`;
+            this.nextStepButton.disabled = !this.targetNode;
         }
+    }
+
+    updateAllHeuristics() {
+        this.nodes.forEach(node => {
+            node.heuristic = this.calculateHeuristic(node);
+        });
     }
 
     nextStep() {
@@ -189,94 +225,76 @@ class DijkstraGraph {
         }
 
         if (!this.algorithmRunning) {
-            if (this.startNode && this.endNodes.length > 0) {
+            if (this.startNode && this.targetNode) {
                 this.algorithmRunning = true;
 
-                this.startNode.distance = 0;
-                this.currentNode = this.startNode;
-                this.currentNode.visited = true;
-                this.visitedNodes.push(this.currentNode);
+                this.updateAllHeuristics();
 
-                this.addToPriorityQueue(this.startNode, 0);
+                this.addToPriorityQueue(this.startNode);
 
                 this.updateButtons(false, true);
                 this.updateUI();
                 return;
-            } else if (this.endNodes.length === 0) {
-                this.showMessage("Please select at least one target node");
+            } else if (!this.targetNode) {
+                this.showMessage("Please select a target node");
                 return;
             }
         }
 
         if (this.priorityQueue.length === 0) {
-            this.showMessage("No path found to target node(s)!");
+            this.showMessage("No path found to target node!");
             this.algorithmRunning = false;
             this.updateButtons(true, false);
             return;
         }
 
-        const [currentDistance, currentNodeId] = this.priorityQueue.shift();
+        const [currentNodeId, _] = this.priorityQueue.shift();
         this.currentNode = this.nodes.find(node => node.id === currentNodeId);
         this.currentNode.inQueue = false;
 
-        if (this.currentNode.visited && currentDistance > this.currentNode.distance) {
+        if (this.currentNode.visited) {
             this.updateUI();
             return;
         }
 
-        if (!this.currentNode.visited) {
-            this.currentNode.visited = true;
-            this.visitedNodes.push(this.currentNode);
-        }
+        this.currentNode.visited = true;
+        this.visitedNodes.push(this.currentNode);
 
-        if (this.endNodes.includes(this.currentNode)) {
-            this.reconstructPath(this.currentNode);
-
-            const allTargetsFound = this.endNodes.every(target =>
-                this.solutionPaths.some(path => path[path.length - 1] === target)
-            );
-
-            if (allTargetsFound) {
-                this.pathFound = true;
-                this.showMessage("All paths found!");
-                this.algorithmRunning = false;
-                this.updateButtons(true, false);
-            } else {
-                this.showMessage(`Path to node ${this.currentNode.id} found!`);
-            }
-
+        if (this.currentNode === this.targetNode) {
+            this.pathFound = true;
+            this.reconstructPath();
+            this.showMessage("Path found!");
+            this.algorithmRunning = false;
+            this.updateButtons(true, false);
             this.updateUI();
             return;
         }
 
-        this.updateNeighborDistances(this.currentNode);
+        this.addNeighborsToPriorityQueue();
         this.updateUI();
     }
 
-    updateNeighborDistances(node) {
+    addNeighborsToPriorityQueue() {
         const connectedEdges = this.edges.filter(edge =>
-            edge.node1 === node || edge.node2 === node
+            edge.node1 === this.currentNode || edge.node2 === this.currentNode
         );
 
         connectedEdges.forEach(edge => {
-            const neighbor = edge.node1 === node ? edge.node2 : edge.node1;
+            const neighbor = edge.node1 === this.currentNode ? edge.node2 : edge.node1;
 
-            const newDistance = node.distance + edge.weight;
-
-            if (newDistance < neighbor.distance) {
-                neighbor.distance = newDistance;
-                neighbor.parent = node;
-                this.addToPriorityQueue(neighbor, newDistance);
+            if (!neighbor.visited && !neighbor.inQueue) {
+                neighbor.parent = this.currentNode;
+                this.addToPriorityQueue(neighbor);
             }
         });
     }
 
-    addToPriorityQueue(node, distance) {
+    addToPriorityQueue(node) {
         node.inQueue = true;
 
-        const entry = [distance, node.id];
+        const entry = [node.id, node.heuristic];
 
-        let insertIndex = this.priorityQueue.findIndex(([d, _]) => d > distance);
+        let insertIndex = this.priorityQueue.findIndex(([_, h]) => h > node.heuristic);
         if (insertIndex === -1) {
             insertIndex = this.priorityQueue.length;
         }
@@ -284,34 +302,37 @@ class DijkstraGraph {
         this.priorityQueue.splice(insertIndex, 0, entry);
     }
 
-    reconstructPath(endNode) {
-        if (!endNode) return;
+    reconstructPath() {
+        if (!this.targetNode) return;
 
-        const path = [];
-        let current = endNode;
+        this.solutionPath = [];
+        let current = this.targetNode;
 
         while (current) {
-            path.unshift(current);
+            this.solutionPath.unshift(current);
             current = current.parent;
         }
-
-        this.solutionPaths.push(path);
     }
 
     reset(fullReset = true) {
         if (this.nodes.length === 0) return;
 
-        this.nodes.forEach(node => node.reset());
+        this.nodes.forEach(node => {
+            node.reset();
+            node.isTarget = false;
+        });
 
         this.priorityQueue = [];
         this.visitedNodes = [];
-        this.solutionPaths = [];
+        this.solutionPath = [];
         this.pathFound = false;
         this.algorithmRunning = false;
         this.currentNode = null;
 
         if (fullReset) {
-            this.endNodes = [];
+            this.targetNode = null;
+        } else if (this.targetNode) {
+            this.targetNode.isTarget = true;
         }
 
         this.hideMessage();
@@ -321,7 +342,7 @@ class DijkstraGraph {
 
     updateButtons(canGenerate, isRunning) {
         this.generateButton.disabled = isRunning;
-        this.nextStepButton.disabled = this.endNodes.length === 0 || this.pathFound;
+        this.nextStepButton.disabled = !this.targetNode || this.pathFound;
     }
 
     showMessage(message) {
@@ -365,20 +386,6 @@ class DijkstraGraph {
             edgeEl.style.top = `${node1.y}px`;
             edgeEl.style.transform = `rotate(${angle}deg)`;
 
-            const distanceLabel = document.createElement('div');
-            distanceLabel.className = 'distance-label';
-            distanceLabel.textContent = edge.weight;
-            distanceLabel.style.position = 'absolute';
-            distanceLabel.style.top = '-20px';
-            distanceLabel.style.left = `${length / 2 - 10}px`;
-            distanceLabel.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-            distanceLabel.style.padding = '2px 5px';
-            distanceLabel.style.borderRadius = '10px';
-            distanceLabel.style.fontSize = '12px';
-            distanceLabel.style.fontWeight = 'bold';
-            distanceLabel.style.zIndex = '5';
-            edgeEl.appendChild(distanceLabel);
-
             if (edgeEl.classList.contains('traversed') || edgeEl.classList.contains('solution-path')) {
                 const arrow = document.createElement('div');
                 arrow.className = 'edge-arrow';
@@ -395,16 +402,14 @@ class DijkstraGraph {
     }
 
     isEdgeInSolutionPath(node1, node2) {
-        for (const path of this.solutionPaths) {
-            if (path.length < 2) continue;
+        if (this.solutionPath.length < 2) return false;
 
-            for (let i = 0; i < path.length - 1; i++) {
-                const a = path[i];
-                const b = path[i + 1];
+        for (let i = 0; i < this.solutionPath.length - 1; i++) {
+            const a = this.solutionPath[i];
+            const b = this.solutionPath[i + 1];
 
-                if ((a === node1 && b === node2) || (a === node2 && b === node1)) {
-                    return true;
-                }
+            if ((a === node1 && b === node2) || (a === node2 && b === node1)) {
+                return true;
             }
         }
         return false;
@@ -427,30 +432,34 @@ class DijkstraGraph {
             nodeEl.style.left = `${node.x - 25}px`;
             nodeEl.style.top = `${node.y - 25}px`;
 
-            if (node.visited && node !== this.startNode) {
-                const distanceLabel = document.createElement('div');
-                distanceLabel.className = 'node-distance';
-                distanceLabel.textContent = node.distance;
-                distanceLabel.style.position = 'absolute';
-                distanceLabel.style.top = '-25px';
-                distanceLabel.style.left = '0';
-                distanceLabel.style.width = '100%';
-                distanceLabel.style.textAlign = 'center';
-                distanceLabel.style.fontSize = '12px';
-                distanceLabel.style.fontWeight = 'bold';
-                distanceLabel.style.color = '#333';
-                distanceLabel.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-                distanceLabel.style.borderRadius = '10px';
-                distanceLabel.style.padding = '2px 0';
-                nodeEl.appendChild(distanceLabel);
+            if (this.targetNode && node.heuristic !== Infinity) {
+                const heuristicLabel = document.createElement('div');
+                heuristicLabel.className = 'heuristic-label';
+                heuristicLabel.textContent = `h=${node.heuristic.toFixed(0)}`;
+                heuristicLabel.style.position = 'absolute';
+                heuristicLabel.style.top = '-25px';
+                heuristicLabel.style.left = '0';
+                heuristicLabel.style.width = '100%';
+                heuristicLabel.style.textAlign = 'center';
+                heuristicLabel.style.fontSize = '12px';
+                heuristicLabel.style.fontWeight = 'bold';
+                heuristicLabel.style.color = '#333';
+                heuristicLabel.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+                heuristicLabel.style.borderRadius = '10px';
+                heuristicLabel.style.padding = '2px 0';
+                nodeEl.appendChild(heuristicLabel);
             }
 
             if (node === this.currentNode) {
                 nodeEl.classList.add('current');
             }
 
-            if (this.endNodes.includes(node)) {
-                nodeEl.classList.add('end-node');
+            if (node === this.targetNode) {
+                nodeEl.classList.add('target-node');
+            }
+
+            if (node === this.startNode) {
+                nodeEl.classList.add('start-node');
             }
 
             if (node.visited) {
@@ -463,63 +472,44 @@ class DijkstraGraph {
 
             nodeEl.addEventListener('click', () => {
                 if (!this.algorithmRunning && node !== this.startNode) {
-                    this.toggleEndNode(node);
+                    this.toggleTargetNode(node);
                 }
             });
 
             container.appendChild(nodeEl);
         });
 
-        document.getElementById('current-node').textContent = `Current Node: ${this.currentNode ? this.currentNode.id : this.startNode ? this.startNode.id : 'None'}`;
-        document.getElementById('end-node').textContent = `Target Node(s): ${this.endNodes.map(node => node.id).join(', ') || 'None (Click on nodes to set targets)'}`;
+        document.getElementById('current-node').textContent = `Current Node: ${this.currentNode ? this.currentNode.id : 'None'}`;
+        document.getElementById('target-node').textContent = `Target Node: ${this.targetNode ? this.targetNode.id : 'None (Click on a node to set as target)'}`;
         document.getElementById('visited-nodes').textContent = `Visited Nodes: ${this.visitedNodes.map(node => node.id).join(', ') || 'None'}`;
 
-        this.updateLegend();
+        if (this.solutionPath.length > 0) {
+            document.getElementById('solution-path').textContent = `Solution Path: ${this.solutionPath.map(node => node.id).join(' → ')}`;
+        } else {
+            document.getElementById('solution-path').textContent = 'Solution Path: None';
+        }
 
         this.updateQueueDisplay();
     }
 
-    updateLegend() {
-        const legend = document.querySelector('.legend');
-
-        if (!document.querySelector('.legend-item.weight')) {
-            const weightLegendItem = document.createElement('div');
-            weightLegendItem.className = 'legend-item weight';
-            weightLegendItem.innerHTML = `
-                <div style="display: flex; align-items: center;">
-                    <div style="width: 50px; height: 20px; position: relative; background-color: #95a5a6;">
-                        <div style="position: absolute; top: -15px; left: 15px; background-color: rgba(255,255,255,0.7); padding: 2px 5px; border-radius: 10px; font-size: 12px;">42</div>
-                    </div>
-                    <span style="margin-left: 5px;">Edge Weight</span>
-                </div>
-            `;
-            legend.appendChild(weightLegendItem);
-        }
-
-        const endNodeLegend = document.querySelector('.legend-item:nth-last-child(2)');
-        if (endNodeLegend) {
-            endNodeLegend.querySelector('span').textContent = 'Target Node(s)';
-        }
-    }
-
     updateQueueDisplay() {
         this.queueContainer.innerHTML = '';
-        document.querySelector('.queue-label').textContent = "Priority Queue:";
+        document.querySelector('.queue-label').textContent = "Priority Queue (by heuristic):";
 
         if (this.priorityQueue.length === 0) {
             return;
         }
 
-        this.priorityQueue.forEach(([distance, nodeId]) => {
+        this.priorityQueue.forEach(([nodeId, heuristic]) => {
             const queueItem = document.createElement('div');
             queueItem.className = 'queue-item';
-            queueItem.innerHTML = `${nodeId}<span style="font-size: 9px; display: block;">${distance}</span>`;
+            queueItem.innerHTML = `${nodeId}<span style="font-size: 9px; display: block;">h=${heuristic.toFixed(0)}</span>`;
             this.queueContainer.appendChild(queueItem);
         });
     }
 }
 
-const graph = new DijkstraGraph();
+const graph = new BestFirstSearch();
 
 window.addEventListener('load', () => {
     graph.generate();
@@ -534,7 +524,6 @@ document.addEventListener('keydown', (event) => {
         graph.generate();
     }
 });
-
 
 document.addEventListener('DOMContentLoaded', function () {
     const algorithmButtons = document.querySelectorAll('.algorithm-selector .btn');
@@ -569,5 +558,4 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-
-document.getElementById('mapButton').classList.add('active');
+document.getElementById('bestFirstButton').classList.add('active');

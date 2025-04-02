@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bidirectional Search Algorithm Visualization</title>
+    <link rel="stylesheet" href="css/stylev2.css">
+    <style>
+        .traversed-forward {
+            background-color: #3498db !important;
+            opacity: 0.6;
+        }
+
+        .traversed-backward {
+            background-color: #e74c3c !important;
+            opacity: 0.6;
+        }
+
+        .visited-forward {
+            box-shadow: 0 0 0 2px #3498db !important;
+            opacity: 0.9;
+        }
+
+        .visited-backward {
+            box-shadow: 0 0 0 2px #e74c3c !important;
+            opacity: 0.9;
+        }
+
+        .in-queue-forward {
+            box-shadow: 0 0 0 3px #2980b9 !important;
+        }
+
+        .in-queue-backward {
+            box-shadow: 0 0 0 3px #c0392b !important;
+        }
+
+        .current-forward {
+            box-shadow: 0 0 0 3px gold !important;
+            transform: scale(1.1);
+            z-index: 10;
+            border: 2px solid #3498db;
+        }
+
+        .current-backward {
+            box-shadow: 0 0 0 3px gold !important;
+            transform: scale(1.1);
+            z-index: 10;
+            border: 2px solid #e74c3c;
+        }
+
+        .meeting-node {
+            box-shadow: 0 0 0 5px purple !important;
+            transform: scale(1.2);
+            z-index: 12;
+            border: 3px solid purple;
+        }
+
+        .btn-bidirectional {
+            background-color: #9b59b6;
+        }
+
+        .queue-header {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        /* Make level 3 nodes more visible */
+        .node.level-3 {
+            background-color: #f39c12; /* Distinct orange color */
+            border: 2px solid #d35400; /* Darker border */
+            opacity: 1; /* Full opacity */
+        }
+    </style>
+</head>
+<body>
+
+<div class="algorithm-selector">
+    <button id="randomWalkButton" class="btn btn-random-walk text-white">Random Walk</button>
+    <button id="bfsButton" class="btn btn-bfs text-white">BFS</button>
+    <button id="dfsButton" class="btn btn-dijkstra text-white">DFS</button>
+    <button id="dijkstraButton" class="btn btn-dijkstra text-white">Dijkstra</button>
+    <button id="bestFirstButton" class="btn btn-best-first text-white">Best-First</button>
+    <button id="astarButton" class="btn btn-astar text-white">A*</button>
+    <button id="bidirectionalButton" class="btn btn-bidirectional text-white">Bidirectional</button>
+<!--    <button id="mapButton" class="btn btn-map text-white">Map</button>-->
+</div>
+
+<div class="container">
+    <h1>Bidirectional Search Visualization</h1>
+
+    <div class="algorithm-description">
+        <h3>How Bidirectional Search Works:</h3>
+        <p>Bidirectional search runs two simultaneous breadth-first searches:
+            one forward from the source and one backward from the destination.</p>
+        <p>The algorithm terminates when the two searches meet, dramatically reducing the search space compared to a standard BFS.</p>
+        <p>In this visualization, you can:</p>
+        <ul>
+            <li>Generate a new random graph with 4 levels</li>
+            <li>Select a target node by clicking on it</li>
+            <li>Step through the bidirectional search algorithm manually</li>
+            <li>Reset the visualization at any time</li>
+        </ul>
+    </div>
+
+    <div class="controls">
+        <button id="generate">Generate New Graph</button>
+        <button id="nextStep">Next Step</button>
+        <button id="reset">Reset</button>
+    </div>
+
+    <div id="visualization">
+        <div class="message-box" id="messageBox"></div>
+    </div>
+
+    <div class="queue-container">
+        <div class="queue-label">Bidirectional Queues:</div>
+        <div class="queue-items" id="queueItems"></div>
+    </div>
+
+    <div class="info-panel">
+        <h3>Current State:</h3>
+        <p id="current-node">Forward Node: None | Backward Node: None</p>
+        <p id="end-node">Target Node: None (Click on a node to set as target)</p>
+        <p id="visited-nodes">Nodes Visited (Forward): None | Nodes Visited (Backward): None</p>
+        <p id="meeting-node">Meeting Node: None yet</p>
+
+        <h3>Legend:</h3>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #3498db;"></div>
+                <span>Level 0 (Root)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #9b59b6;"></div>
+                <span>Level 1</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #e74c3c;"></div>
+                <span>Level 2</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #f39c12;"></div>
+                <span>Level 3</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 3px gold; border: 2px solid #3498db;"></div>
+                <span>Current Forward Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 3px gold; border: 2px solid #e74c3c;"></div>
+                <span>Current Backward Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 3px #2980b9;"></div>
+                <span>In Forward Queue</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 3px #c0392b;"></div>
+                <span>In Backward Queue</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 2px #3498db; opacity: 0.9;"></div>
+                <span>Visited (Forward)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 2px #e74c3c; opacity: 0.9;"></div>
+                <span>Visited (Backward)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 5px purple; border: 3px solid purple; transform: scale(1.2);"></div>
+                <span>Meeting Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 3px #2ecc71; border: 3px solid #2ecc71;"></div>
+                <span>Target Node</span>
+            </div>
+            <div class="legend-item">
+                <div style="width: 50px; height: 5px; background-color: #2ecc71;"></div>
+                <span>Solution Path</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../bt_git/js/vizual/bidirectionalv.js" defer></script>
+
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best-First Search Algorithm Visualization</title>
+    <link rel="stylesheet" href="css/stylev2.css">
+    <style>
+        /* Additional styles for Best-First Search */
+        .traversed {
+            background-color: #3498db !important;
+            opacity: 0.6;
+        }
+
+        .start-node {
+            border: 3px solid #2980b9 !important;
+        }
+
+        .target-node {
+            box-shadow: 0 0 0 3px #2ecc71 !important;
+            border: 3px solid #2ecc71 !important;
+        }
+
+        .current {
+            box-shadow: 0 0 0 3px gold !important;
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .visited {
+            opacity: 0.7;
+        }
+
+        .in-queue {
+            box-shadow: 0 0 0 3px #f39c12 !important;
+        }
+
+        .solution-path {
+            background-color: #2ecc71 !important;
+            opacity: 0.8;
+            height: 3px;
+        }
+
+        .btn-best-first {
+            background-color: #9b59b6;
+        }
+
+        .heuristic-label {
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="algorithm-selector">
+    <button id="randomWalkButton" class="btn btn-random-walk text-white">Random Walk</button>
+    <button id="bfsButton" class="btn btn-bfs text-white">BFS</button>
+    <button id="dfsButton" class="btn btn-dijkstra text-white">DFS</button>
+    <button id="dijkstraButton" class="btn btn-dijkstra text-white">Dijkstra</button>
+    <button id="bestFirstButton" class="btn btn-best-first text-white">Best-First</button>
+    <button id="astarButton" class="btn btn-astar text-white">A*</button>
+    <button id="bidirectionalButton" class="btn btn-bidirectional text-white">Bidirectional</button>
+<!--    <button id="mapButton" class="btn btn-map text-white">Map</button>-->
+</div>
+
+<div class="container">
+    <h1>Best-First Search (Greedy) Algorithm Visualization</h1>
+
+    <div class="algorithm-description">
+        <h3>How Best-First Search (Greedy) Works:</h3>
+        <p>Best-First Search is an informed search algorithm that uses a heuristic function to prioritize which nodes to explore next.
+            Unlike A*, it only considers the estimated distance to the goal (the heuristic) without accounting for the cost of the path so far.</p>
+        <p>Key characteristics:</p>
+        <ul>
+            <li>Uses a <strong>priority queue</strong> based on a heuristic function</li>
+            <li>Always explores the node that appears closest to the target</li>
+            <li>Is "greedy" because it only looks at the estimated future cost</li>
+            <li>May not find the optimal (shortest) path, but often finds a solution quickly</li>
+        </ul>
+        <p>In this visualization, we use Euclidean distance as the heuristic.</p>
+        <p>In this visualization, you can:</p>
+        <ul>
+            <li>Generate a new random graph with 3 levels</li>
+            <li>Select a target node by clicking on it</li>
+            <li>Step through the algorithm manually with the "Next Step" button</li>
+            <li>Reset the visualization at any time</li>
+        </ul>
+    </div>
+
+    <div class="controls">
+        <button id="generate">Generate New Graph</button>
+        <button id="nextStep">Next Step</button>
+        <button id="reset">Reset</button>
+    </div>
+
+    <div id="visualization">
+        <div class="message-box" id="messageBox"></div>
+    </div>
+
+    <div class="queue-container">
+        <div class="queue-label">Priority Queue (by heuristic):</div>
+        <div class="queue-items" id="queueItems"></div>
+    </div>
+
+    <div class="info-panel">
+        <h3>Current State:</h3>
+        <p id="current-node">Current Node: None</p>
+        <p id="target-node">Target Node: None (Click on a node to set as target)</p>
+        <p id="visited-nodes">Visited Nodes: None</p>
+        <p id="solution-path">Solution Path: None</p>
+
+        <h3>Legend:</h3>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #3498db;"></div>
+                <span>Level 0 (Root)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #9b59b6;"></div>
+                <span>Level 1</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #e74c3c;"></div>
+                <span>Level 2</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="border: 3px solid #2980b9;"></div>
+                <span>Start Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 3px gold; transform: scale(1.1);"></div>
+                <span>Current Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 3px #f39c12;"></div>
+                <span>In Queue</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="opacity: 0.7;"></div>
+                <span>Visited Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="box-shadow: 0 0 0 3px #2ecc71; border: 3px solid #2ecc71;"></div>
+                <span>Target Node</span>
+            </div>
+            <div class="legend-item">
+                <div style="width: 50px; height: 3px; background-color: #2ecc71; opacity: 0.8;"></div>
+                <span>Solution Path</span>
+            </div>
+            <div class="legend-item">
+                <div style="position: relative; width: 20px; height: 20px; background-color: #3498db;">
+                    <span style="position: absolute; top: -15px; left: 0; width: 100%; text-align: center; background-color: rgba(255,255,255,0.7); border-radius: 10px; font-size: 11px; padding: 2px 0;">h=42</span>
+                </div>
+                <span>Heuristic Value</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../bt_git/js/vizual/bestfirstv.js" defer></script>
+
+</body>
+</html>

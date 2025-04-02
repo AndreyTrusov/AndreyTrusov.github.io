@@ -37,7 +37,6 @@ class BFSGraph {
         this.solutionPath = [];
         this.bfsRunning = false;
 
-        // UI Elements
         this.nextStepButton = document.getElementById('nextStep');
         this.resetButton = document.getElementById('reset');
         this.generateButton = document.getElementById('generate');
@@ -61,12 +60,10 @@ class BFSGraph {
         this.edges = [];
         this.pathFound = false;
 
-        // Create root node (level 0)
         const root = new Node(1, 0);
         this.nodes.push(root);
 
-        // Create level 1 nodes (2-5)
-        const level1Count = Math.floor(Math.random() * 2) + 3; // 3-4 nodes
+        const level1Count = Math.floor(Math.random() * 2) + 3;
         for (let i = 0; i < level1Count; i++) {
             const node = new Node(this.nodes.length + 1, 1);
             this.nodes.push(node);
@@ -74,10 +71,9 @@ class BFSGraph {
             this.edges.push([root, node]);
         }
 
-        // Create level 2 nodes (6-15)
         const level1Nodes = this.nodes.filter(node => node.level === 1);
         level1Nodes.forEach(parentNode => {
-            const childCount = Math.floor(Math.random() * 2) + 2; // 2-3 children
+            const childCount = Math.floor(Math.random() * 2) + 2;
             for (let i = 0; i < childCount; i++) {
                 const node = new Node(this.nodes.length + 1, 2);
                 this.nodes.push(node);
@@ -105,7 +101,6 @@ class BFSGraph {
         root.x = width / 2;
         root.y = 50;
 
-        // Position level 1 nodes
         const level1Nodes = this.nodes.filter(node => node.level === 1);
         const l1Width = width * 0.8;
         const l1Step = l1Width / (level1Nodes.length + 1);
@@ -115,7 +110,6 @@ class BFSGraph {
             node.y = height / 2 - 50;
         });
 
-        // Position level 2 nodes
         const level2Nodes = this.nodes.filter(node => node.level === 2);
         const nodesByParent = {};
 
@@ -155,16 +149,15 @@ class BFSGraph {
             return;
         }
 
-        // First step - initialize BFS
         if (!this.bfsRunning) {
             if (this.startNode && this.endNode) {
                 this.bfsRunning = true;
+                // this.reset(false);
 
                 this.currentNode = this.startNode;
                 this.currentNode.visited = true;
                 this.visitedNodes.push(this.currentNode);
 
-                // Add neighbors to queue
                 this.addNeighborsToQueue(this.currentNode);
 
                 this.updateButtons(false, true);
@@ -183,11 +176,9 @@ class BFSGraph {
             return;
         }
 
-        // Get next node from queue
         this.currentNode = this.queue.shift();
         this.currentNode.inQueue = false;
 
-        // Check if we reached the end node
         if (this.currentNode === this.endNode) {
             this.pathFound = true;
             this.reconstructPath();
@@ -198,13 +189,11 @@ class BFSGraph {
             return;
         }
 
-        // Mark as visited
         if (!this.currentNode.visited) {
             this.currentNode.visited = true;
             this.visitedNodes.push(this.currentNode);
         }
 
-        // Add neighbors to queue
         this.addNeighborsToQueue(this.currentNode);
 
         this.updateUI();
@@ -214,7 +203,7 @@ class BFSGraph {
         node.connections.forEach(neighbor => {
             if (!neighbor.visited && !neighbor.inQueue) {
                 neighbor.inQueue = true;
-                neighbor.parent = node; // Remember where we came from
+                neighbor.parent = node;
                 this.queue.push(neighbor);
             }
         });
@@ -235,7 +224,6 @@ class BFSGraph {
     reset(fullReset = true) {
         if (this.nodes.length === 0) return;
 
-        // Reset all nodes
         this.nodes.forEach(node => node.reset());
 
         this.queue = [];
@@ -263,7 +251,6 @@ class BFSGraph {
         this.messageBox.textContent = message;
         this.messageBox.style.display = 'block';
 
-        // Auto-hide after 3 seconds
         setTimeout(() => {
             this.hideMessage();
         }, 3000);
@@ -280,29 +267,24 @@ class BFSGraph {
             const edge = document.createElement('div');
             edge.className = 'edge';
 
-            // Check if edge is part of solution path
             const isPathEdge = this.isEdgeInSolutionPath(node1, node2);
             if (isPathEdge) {
                 edge.classList.add('solution-path');
             }
-            // Check if connected to visited nodes
             else if (node1.visited && node2.visited) {
                 edge.classList.add('traversed');
             }
 
-            // Calculate edge positioning
             const dx = node2.x - node1.x;
             const dy = node2.y - node1.y;
             const length = Math.sqrt(dx * dx + dy * dy);
             const angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
-            // Position and rotate the edge
             edge.style.width = `${length}px`;
             edge.style.left = `${node1.x}px`;
             edge.style.top = `${node1.y}px`;
             edge.style.transform = `rotate(${angle}deg)`;
 
-            // Add arrow for direction on traversed paths
             if (edge.classList.contains('traversed') || edge.classList.contains('solution-path')) {
                 const arrow = document.createElement('div');
                 arrow.className = 'edge-arrow';
@@ -343,7 +325,6 @@ class BFSGraph {
 
         this.drawEdges();
 
-        // Draw nodes
         this.nodes.forEach(node => {
             const nodeEl = document.createElement('div');
             nodeEl.className = `node level-${node.level}`;
@@ -367,7 +348,6 @@ class BFSGraph {
                 nodeEl.classList.add('in-queue');
             }
 
-            // Add click handler to set end node
             nodeEl.addEventListener('click', () => {
                 if (!this.bfsRunning && node !== this.startNode) {
                     this.setEndNode(node);
@@ -377,7 +357,6 @@ class BFSGraph {
             container.appendChild(nodeEl);
         });
 
-        // Update info panel
         document.getElementById('current-node').textContent = `Current Node: ${this.currentNode ? this.currentNode.id : this.startNode ? this.startNode.id : 'None'}`;
         document.getElementById('end-node').textContent = `Target Node: ${this.endNode ? this.endNode.id : 'None (Click on a node to set as target)'}`;
         document.getElementById('visited-nodes').textContent = `Visited Nodes: ${this.visitedNodes.map(node => node.id).join(', ') || 'None'}`;
@@ -401,14 +380,12 @@ class BFSGraph {
     }
 }
 
-// Initialize
 const graph = new BFSGraph();
 
 window.addEventListener('load', () => {
     graph.generate();
 });
 
-// Add keyboard controls
 document.addEventListener('keydown', (event) => {
     if (event.key === ' ' || event.key === 'Enter') {
         graph.nextStep();
@@ -431,13 +408,22 @@ document.addEventListener('DOMContentLoaded', function () {
             const algorithm = this.id;
             console.log(`Switched to ${algorithm}`);
 
-            // Navigate to the corresponding HTML file based on algorithm
             if (algorithm === 'mapButton') {
-                window.location.href = 'index.html';
+                window.location.href = 'index_old.html';
             } else if (algorithm === 'bfsButton') {
-                window.location.href = 'index_2.html';
+                window.location.href = 'index.html';
             } else if (algorithm === 'dijkstraButton') {
                 window.location.href = 'index_3.html';
+            } else if (algorithm === 'dfsButton') {
+                window.location.href = 'index_4.html';
+            } else if (algorithm === 'astarButton') {
+                window.location.href = 'index_5.html';
+            } else if (algorithm === 'bidirectionalButton') {
+                window.location.href = 'index_6.html';
+            } else if (algorithm === 'randomWalkButton') {
+                window.location.href = 'index_7.html';
+            } else if (algorithm === 'bestFirstButton') {
+                window.location.href = 'index_8.html';
             }
         });
     });

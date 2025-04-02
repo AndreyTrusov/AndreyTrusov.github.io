@@ -14,9 +14,8 @@ class Node {
         this.x = 0;
         this.y = 0;
         this.visited = false;
-        this.inQueue = false;
+        this.inStack = false;
         this.parent = null;
-        this.distance = Infinity;
     }
 
     connect(node, weight = null) {
@@ -28,17 +27,16 @@ class Node {
 
     reset() {
         this.visited = false;
-        this.inQueue = false;
+        this.inStack = false;
         this.parent = null;
-        this.distance = Infinity;
     }
 }
 
-class DijkstraGraph {
+class DFSGraph {
     constructor() {
         this.nodes = [];
         this.edges = [];
-        this.priorityQueue = []; // [node, distance]
+        this.stack = [];
         this.visitedNodes = [];
         this.currentNode = null;
         this.startNode = null;
@@ -51,7 +49,7 @@ class DijkstraGraph {
         this.resetButton = document.getElementById('reset');
         this.generateButton = document.getElementById('generate');
         this.messageBox = document.getElementById('messageBox');
-        this.queueContainer = document.getElementById('queueItems');
+        this.stackContainer = document.getElementById('queueItems');
 
         this.generate = this.generate.bind(this);
         this.nextStep = this.nextStep.bind(this);
@@ -63,17 +61,17 @@ class DijkstraGraph {
         this.resetButton.addEventListener('click', this.reset);
         this.generateButton.addEventListener('click', this.generate);
 
-        document.querySelector('h1').textContent = "Dijkstra's Algorithm Visualization";
+        document.querySelector('h1').textContent = "Depth-First Search Visualization";
         const description = document.querySelector('.algorithm-description');
         description.innerHTML = `
-            <h3>How Dijkstra's Algorithm Works:</h3>
-            <p>Dijkstra's algorithm finds the shortest path between nodes in a graph with positive edge weights.
-               It uses a priority queue to always process the node with the smallest known distance first.</p>
+            <h3>How Depth-First Search (DFS) Works:</h3>
+            <p>DFS explores as far as possible along each branch before backtracking. 
+               It uses a stack data structure to keep track of nodes to visit next.</p>
             <p>In this visualization, you can:</p>
             <ul>
-                <li>Generate a new random weighted graph</li>
+                <li>Generate a new random graph</li>
                 <li>Select one or more target nodes by clicking on them</li>
-                <li>Step through Dijkstra's algorithm manually with the "Next Step" button</li>
+                <li>Step through the DFS algorithm manually with the "Next Step" button</li>
                 <li>Reset the visualization at any time</li>
             </ul>
         `;
@@ -192,12 +190,7 @@ class DijkstraGraph {
             if (this.startNode && this.endNodes.length > 0) {
                 this.algorithmRunning = true;
 
-                this.startNode.distance = 0;
-                this.currentNode = this.startNode;
-                this.currentNode.visited = true;
-                this.visitedNodes.push(this.currentNode);
-
-                this.addToPriorityQueue(this.startNode, 0);
+                this.pushToStack(this.startNode);
 
                 this.updateButtons(false, true);
                 this.updateUI();
@@ -208,26 +201,24 @@ class DijkstraGraph {
             }
         }
 
-        if (this.priorityQueue.length === 0) {
+        if (this.stack.length === 0) {
             this.showMessage("No path found to target node(s)!");
             this.algorithmRunning = false;
             this.updateButtons(true, false);
             return;
         }
 
-        const [currentDistance, currentNodeId] = this.priorityQueue.shift();
+        const currentNodeId = this.stack.pop();
         this.currentNode = this.nodes.find(node => node.id === currentNodeId);
-        this.currentNode.inQueue = false;
+        this.currentNode.inStack = false;
 
-        if (this.currentNode.visited && currentDistance > this.currentNode.distance) {
+        if (this.currentNode.visited) {
             this.updateUI();
             return;
         }
 
-        if (!this.currentNode.visited) {
-            this.currentNode.visited = true;
-            this.visitedNodes.push(this.currentNode);
-        }
+        this.currentNode.visited = true;
+        this.visitedNodes.push(this.currentNode);
 
         if (this.endNodes.includes(this.currentNode)) {
             this.reconstructPath(this.currentNode);
@@ -249,39 +240,33 @@ class DijkstraGraph {
             return;
         }
 
-        this.updateNeighborDistances(this.currentNode);
+        this.addNeighborsToStack(this.currentNode);
         this.updateUI();
     }
 
-    updateNeighborDistances(node) {
+    addNeighborsToStack(node) {
+        const neighbors = [];
+
         const connectedEdges = this.edges.filter(edge =>
             edge.node1 === node || edge.node2 === node
         );
 
         connectedEdges.forEach(edge => {
             const neighbor = edge.node1 === node ? edge.node2 : edge.node1;
-
-            const newDistance = node.distance + edge.weight;
-
-            if (newDistance < neighbor.distance) {
-                neighbor.distance = newDistance;
+            if (!neighbor.visited) {
+                neighbors.push(neighbor);
                 neighbor.parent = node;
-                this.addToPriorityQueue(neighbor, newDistance);
             }
         });
+
+        for (let i = neighbors.length - 1; i >= 0; i--) {
+            this.pushToStack(neighbors[i]);
+        }
     }
 
-    addToPriorityQueue(node, distance) {
-        node.inQueue = true;
-
-        const entry = [distance, node.id];
-
-        let insertIndex = this.priorityQueue.findIndex(([d, _]) => d > distance);
-        if (insertIndex === -1) {
-            insertIndex = this.priorityQueue.length;
-        }
-
-        this.priorityQueue.splice(insertIndex, 0, entry);
+    pushToStack(node) {
+        node.inStack = true;
+        this.stack.push(node.id);
     }
 
     reconstructPath(endNode) {
@@ -303,7 +288,7 @@ class DijkstraGraph {
 
         this.nodes.forEach(node => node.reset());
 
-        this.priorityQueue = [];
+        this.stack = [];
         this.visitedNodes = [];
         this.solutionPaths = [];
         this.pathFound = false;
@@ -350,8 +335,7 @@ class DijkstraGraph {
             const isPathEdge = this.isEdgeInSolutionPath(node1, node2);
             if (isPathEdge) {
                 edgeEl.classList.add('solution-path');
-            }
-            else if (node1.visited && node2.visited) {
+            } else if (node1.visited && node2.visited) {
                 edgeEl.classList.add('traversed');
             }
 
@@ -364,20 +348,6 @@ class DijkstraGraph {
             edgeEl.style.left = `${node1.x}px`;
             edgeEl.style.top = `${node1.y}px`;
             edgeEl.style.transform = `rotate(${angle}deg)`;
-
-            const distanceLabel = document.createElement('div');
-            distanceLabel.className = 'distance-label';
-            distanceLabel.textContent = edge.weight;
-            distanceLabel.style.position = 'absolute';
-            distanceLabel.style.top = '-20px';
-            distanceLabel.style.left = `${length / 2 - 10}px`;
-            distanceLabel.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-            distanceLabel.style.padding = '2px 5px';
-            distanceLabel.style.borderRadius = '10px';
-            distanceLabel.style.fontSize = '12px';
-            distanceLabel.style.fontWeight = 'bold';
-            distanceLabel.style.zIndex = '5';
-            edgeEl.appendChild(distanceLabel);
 
             if (edgeEl.classList.contains('traversed') || edgeEl.classList.contains('solution-path')) {
                 const arrow = document.createElement('div');
@@ -427,24 +397,6 @@ class DijkstraGraph {
             nodeEl.style.left = `${node.x - 25}px`;
             nodeEl.style.top = `${node.y - 25}px`;
 
-            if (node.visited && node !== this.startNode) {
-                const distanceLabel = document.createElement('div');
-                distanceLabel.className = 'node-distance';
-                distanceLabel.textContent = node.distance;
-                distanceLabel.style.position = 'absolute';
-                distanceLabel.style.top = '-25px';
-                distanceLabel.style.left = '0';
-                distanceLabel.style.width = '100%';
-                distanceLabel.style.textAlign = 'center';
-                distanceLabel.style.fontSize = '12px';
-                distanceLabel.style.fontWeight = 'bold';
-                distanceLabel.style.color = '#333';
-                distanceLabel.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-                distanceLabel.style.borderRadius = '10px';
-                distanceLabel.style.padding = '2px 0';
-                nodeEl.appendChild(distanceLabel);
-            }
-
             if (node === this.currentNode) {
                 nodeEl.classList.add('current');
             }
@@ -457,9 +409,10 @@ class DijkstraGraph {
                 nodeEl.classList.add('visited');
             }
 
-            if (node.inQueue) {
+            if (node.inStack) {
                 nodeEl.classList.add('in-queue');
             }
+
 
             nodeEl.addEventListener('click', () => {
                 if (!this.algorithmRunning && node !== this.startNode) {
@@ -474,52 +427,34 @@ class DijkstraGraph {
         document.getElementById('end-node').textContent = `Target Node(s): ${this.endNodes.map(node => node.id).join(', ') || 'None (Click on nodes to set targets)'}`;
         document.getElementById('visited-nodes').textContent = `Visited Nodes: ${this.visitedNodes.map(node => node.id).join(', ') || 'None'}`;
 
-        this.updateLegend();
-
-        this.updateQueueDisplay();
+        this.updateStackDisplay();
     }
 
-    updateLegend() {
-        const legend = document.querySelector('.legend');
+    updateStackDisplay() {
+        this.stackContainer.innerHTML = '';
+        document.querySelector('.queue-label').textContent = "DFS Stack:";
 
-        if (!document.querySelector('.legend-item.weight')) {
-            const weightLegendItem = document.createElement('div');
-            weightLegendItem.className = 'legend-item weight';
-            weightLegendItem.innerHTML = `
-                <div style="display: flex; align-items: center;">
-                    <div style="width: 50px; height: 20px; position: relative; background-color: #95a5a6;">
-                        <div style="position: absolute; top: -15px; left: 15px; background-color: rgba(255,255,255,0.7); padding: 2px 5px; border-radius: 10px; font-size: 12px;">42</div>
-                    </div>
-                    <span style="margin-left: 5px;">Edge Weight</span>
-                </div>
-            `;
-            legend.appendChild(weightLegendItem);
-        }
-
-        const endNodeLegend = document.querySelector('.legend-item:nth-last-child(2)');
-        if (endNodeLegend) {
-            endNodeLegend.querySelector('span').textContent = 'Target Node(s)';
-        }
-    }
-
-    updateQueueDisplay() {
-        this.queueContainer.innerHTML = '';
-        document.querySelector('.queue-label').textContent = "Priority Queue:";
-
-        if (this.priorityQueue.length === 0) {
+        if (this.stack.length === 0) {
             return;
         }
 
-        this.priorityQueue.forEach(([distance, nodeId]) => {
-            const queueItem = document.createElement('div');
-            queueItem.className = 'queue-item';
-            queueItem.innerHTML = `${nodeId}<span style="font-size: 9px; display: block;">${distance}</span>`;
-            this.queueContainer.appendChild(queueItem);
-        });
+        for (let i = this.stack.length - 1; i >= 0; i--) {
+            const nodeId = this.stack[i];
+            const stackItem = document.createElement('div');
+            stackItem.className = 'queue-item';
+            stackItem.innerHTML = `${nodeId}`;
+
+            if (i === this.stack.length - 1) {
+                stackItem.style.borderColor = '#e74c3c';
+                stackItem.style.backgroundColor = '#f9e7e7';
+            }
+
+            this.stackContainer.appendChild(stackItem);
+        }
     }
 }
 
-const graph = new DijkstraGraph();
+const graph = new DFSGraph();
 
 window.addEventListener('load', () => {
     graph.generate();
@@ -534,7 +469,6 @@ document.addEventListener('keydown', (event) => {
         graph.generate();
     }
 });
-
 
 document.addEventListener('DOMContentLoaded', function () {
     const algorithmButtons = document.querySelectorAll('.algorithm-selector .btn');
@@ -569,5 +503,4 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-
-document.getElementById('mapButton').classList.add('active');
+document.getElementById('dfsButton').classList.add('active');
