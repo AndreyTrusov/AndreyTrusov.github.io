@@ -182,7 +182,7 @@ class DijkstraGraph {
             this.nextStepButton.disabled = this.endNodes.length === 0;
         }
     }
-
+    
     nextStep() {
         if (this.pathFound) {
             return;
