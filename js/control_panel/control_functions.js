@@ -151,6 +151,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.location.href = 'index.html';
             } else if (algorithm === 'dijkstraButton') {
                 window.location.href = 'index_3.html';
+            } else if (algorithm === 'dfsButton') {
+                window.location.href = 'index_4.html';
+            } else if (algorithm === 'astarButton') {
+                window.location.href = 'index_5.html';
+            } else if (algorithm === 'bidirectionalButton') {
+                window.location.href = 'index_6.html';
+            } else if (algorithm === 'randomWalkButton') {
+                window.location.href = 'index_7.html';
+            } else if (algorithm === 'bestFirstButton') {
+                window.location.href = 'index_8.html';
             }
         });
     });
