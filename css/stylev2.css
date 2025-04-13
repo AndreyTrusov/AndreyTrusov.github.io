@@ -33,7 +33,12 @@ body {
     /*justify-content: center;*/
     /*border: 1px solid #e0e0e0;*/
     gap: 5px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
+}
+
+.algorithm-selector-spacer {
+    height: 80px;
+    width: 100%;
 }
 
 .algorithm-selector .btn {
@@ -60,7 +65,6 @@ body {
     background-color: #1a56b8;
 }
 
-
 .btn-start {
     background-color: green;
     color: white;
@@ -84,6 +88,7 @@ body {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
+/* Widget styles */
 .widget {
     width: 100%;
     max-width: 1200px;
