@@ -29,9 +29,9 @@ body {
     border-radius: 25px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     display: flex;
-    /*flex-wrap: wrap;*/
-    /*justify-content: center;*/
-    /*border: 1px solid #e0e0e0;*/
+    flex-wrap: wrap;
+    justify-content: center;
+    border: 1px solid #e0e0e0;
     gap: 5px;
     margin-bottom: 20px;
 }
@@ -65,6 +65,78 @@ body {
     background-color: #1a56b8;
 }
 
+.container {
+    max-width: 900px;
+    margin: 80px auto;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.container .controls {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.container .controls button {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.container .controls button:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.container .controls button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.container .controls button:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.container .controls #generate {
+    background-color: #2ecc71;
+}
+
+.container .controls #generate:hover {
+    background-color: #27ae60;
+}
+
+.container .controls #nextStep {
+    background-color: #3498db;
+}
+
+.container .controls #nextStep:hover {
+    background-color: #2980b9;
+}
+
+.container .controls #reset {
+    background-color: #e74c3c;
+}
+
+.container .controls #reset:hover {
+    background-color: #c0392b;
+}
+
 .btn-start {
     background-color: green;
     color: white;
@@ -79,16 +151,6 @@ body {
     height: 100vh;
 }
 
-.container {
-    max-width: 900px;
-    margin: 80px auto;
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* Widget styles */
 .widget {
     width: 100%;
     max-width: 1200px;
