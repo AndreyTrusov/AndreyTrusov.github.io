@@ -1,10 +1,92 @@
 const markers = [];
 
-// Helper function to call the Roads API's Snap to Roads endpoint
+const API_SAFEGUARDS = {
+    MAX_CALLS: 1000,
+    SESSION_TIMEOUT_MINUTES: 2,
+    enabled: true,
+    callCount: 0,
+    sessionStartTime: Date.now(),
+
+    canMakeCall() {
+        if (!this.enabled) {
+            console.log("API calls are currently disabled.");
+            return false;
+        }
+
+        if (this.callCount >= this.MAX_CALLS) {
+            console.log(`Maximum API call limit (${this.MAX_CALLS}) reached. Disabling API calls.`);
+            this.enabled = false;
+            return false;
+        }
+
+        const currentTime = Date.now();
+        const sessionDurationMs = currentTime - this.sessionStartTime;
+        const sessionDurationMinutes = sessionDurationMs / (1000 * 60);
+
+        if (sessionDurationMinutes >= this.SESSION_TIMEOUT_MINUTES) {
+            console.log(`Session timeout (${this.SESSION_TIMEOUT_MINUTES} minutes) reached. Disabling API calls.`);
+            this.enabled = false;
+            return false;
+        }
+
+        return true;
+    },
+
+    incrementCallCount() {
+        this.callCount++;
+        console.log(`API call count: ${this.callCount}/${this.MAX_CALLS}`);
+
+        if (this.callCount === Math.floor(this.MAX_CALLS * 0.8)) {
+            console.warn(`Warning: Approaching API call limit (${this.callCount}/${this.MAX_CALLS})`);
+        }
+    },
+
+    reset() {
+        this.callCount = 0;
+        this.sessionStartTime = Date.now();
+        this.enabled = true;
+        console.log("API safeguards have been reset.");
+    },
+
+    enable() {
+        this.enabled = true;
+        console.log("API calls have been enabled.");
+    },
+
+    disable() {
+        this.enabled = false;
+        console.log("API calls have been disabled.");
+    },
+
+    getStatus() {
+        const currentTime = Date.now();
+        const sessionDurationMs = currentTime - this.sessionStartTime;
+        const sessionDurationMinutes = sessionDurationMs / (1000 * 60);
+        const timeRemaining = Math.max(0, this.SESSION_TIMEOUT_MINUTES - sessionDurationMinutes);
+
+        return {
+            enabled: this.enabled,
+            callCount: this.callCount,
+            maxCalls: this.MAX_CALLS,
+            callsRemaining: this.MAX_CALLS - this.callCount,
+            sessionDurationMinutes: sessionDurationMinutes.toFixed(2),
+            sessionTimeoutMinutes: this.SESSION_TIMEOUT_MINUTES,
+            timeRemainingMinutes: timeRemaining.toFixed(2)
+        };
+    }
+};
+
+// Helper function to call the Roads API's Snap to Roads endpoint with safeguards
 async function snapToRoad(location) {
+    if (!API_SAFEGUARDS.canMakeCall()) {
+        console.warn("API call prevented by safeguards.");
+        return null;
+    }
     const apiKey = CONFIG.GOOGLE_MAPS_API_KEY;
 
     try {
+        API_SAFEGUARDS.incrementCallCount();
+
         const response = await fetch(
             `https://roads.googleapis.com/v1/snapToRoads?path=${location.lat},${location.lng}&key=${apiKey}`
         );
@@ -59,6 +141,12 @@ async function calculateIntersectionNeighbors_2(node) {
     const apiRequestDelay = 100 * currentSpeed; // ms between API calls to avoid rate limits
 
     for (const point of points) {
+        // Check if we can make more API calls before continuing
+        if (!API_SAFEGUARDS.canMakeCall()) {
+            console.warn("API call limit reached. Stopping further processing.");
+            break;
+        }
+
         // Check if we're too close to existing points
         let tooCloseToExisting = false;
 
